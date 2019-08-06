@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pks-dns
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: pks-dns
+subjects:
+  - kind: ServiceAccount
+    name: pks-dns
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: pks-dns
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pks-dns
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - delete
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pks-dns-secrets
+type: Opaque
+data:
+  PKSUser: <PKS_Username_base64>
+  PKSPass: <PKS_Password_base64>
+  RemoteUser: <Remote_Username_base64>
+  RemotePass: <Remote_Password_base64>
+---
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: pks-dns-configs 
+data:
+  PKSServer: <PKS_Server_FQDN>
+  RemoteServer: <Remote_Server_FQDN>
+  DNSZoneName: <DNS_Zone_Name>
+  DNSServerName: <DNS_Server_Name>
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pks-dns
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: pks-dns
+        image: chipzoller/pks-dns:1.1
+        command: ["pwsh", "-File", "/pks-dns.ps1"]
+        args:
+          - -PKSUser
+          - $(PKSUser)
+          - -PKSPass
+          - $(PKSPass)
+          - -RemoteUser
+          - $(RemoteUser)
+          - -RemotePass
+          - $(RemotePass)
+          - -PKSServer
+          - $(PKSServer)
+          - -RemoteServer
+          - $(RemoteServer)
+          - -DNSZoneName
+          - $(DNSZoneName)
+          - -DNSServerName
+          - $(DNSServerName)
+        env:
+        - name: PKSUser
+          valueFrom:
+            secretKeyRef:
+              name: pks-dns-secrets
+              key: PKSUser
+        - name: PKSPass
+          valueFrom:
+            secretKeyRef:
+              name: pks-dns-secrets
+              key: PKSPass
+        - name: RemoteUser
+          valueFrom:
+            secretKeyRef:
+              name: pks-dns-secrets
+              key: RemoteUser
+        - name: RemotePass
+          valueFrom:
+            secretKeyRef:
+              name: pks-dns-secrets
+              key: RemotePass
+        - name: PKSServer
+          valueFrom:
+            configMapKeyRef:
+              name: pks-dns-configs
+              key: PKSServer
+        - name: RemoteServer
+          valueFrom:
+            configMapKeyRef:
+              name: pks-dns-configs
+              key: RemoteServer
+        - name: DNSZoneName
+          valueFrom:
+            configMapKeyRef:
+              name: pks-dns-configs
+              key: DNSZoneName
+        - name: DNSServerName
+          valueFrom:
+            configMapKeyRef:
+              name: pks-dns-configs
+              key: DNSServerName
+      containers:
+        - name: pks-dns-cleanup
+          image: chipzoller/pks-dns:1.1
+          command: ["/kubectl", "delete", "secrets/pks-dns-secrets", "configmaps/pks-dns-configs"]
+      restartPolicy: OnFailure
+      serviceAccountName: pks-dns
+  backoffLimit: 4
