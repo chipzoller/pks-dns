@@ -36,4 +36,4 @@ Regardless of which method you choose, a Kubernetes manifest will need to be cre
 
 ## I'm Ready To Roll
 
-Sounds good! Prior to that, best have a read of my article [here](https://www.sovsystems.com) which tells you all you need to know to get those sparks flying.
+Sounds good! Prior to that, best have a read of my article [here](https://www.sovsystems.com/blog/optimize-vmwarepks-a-powershell-script-for-all-your-vmware-pks-deployment-needs-0) which tells you all you need to know to get those sparks flying.
