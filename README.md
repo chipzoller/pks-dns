@@ -36,4 +36,4 @@ Regardless of which method you choose, a Kubernetes manifest will need to be cre
 
 ## I'm Ready To Roll
 
-Sounds good! Prior to that, best have a read of my article [here](https://www.sovsystems.com/blog/pks-dns-automated-dns-registration-for-pks-clusters) which tells you all you need to know to get those sparks flying.
+Sounds good! Prior to that, best have a read of my article [here](https://neonmirrors.net/post/2019-08/pks-dns/) which tells you all you need to know to get those sparks flying.
